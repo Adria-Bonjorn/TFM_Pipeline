@@ -324,29 +324,29 @@ process PREPARE_VCF_FOR_ASE {
  *             (ASE) analysis
  */
 
-process ASE_KNOWNSNPS {
-  tag "$sampleId"
-  publishDir "$params.results/$sampleId" 
-  label "mem_large"
+process '6C_ASE_knownSNPs' {
+    tag "$sampleId"
+    publishDir "$params.results/$sampleId"
 
-  input:
-    path genome
-    path index
-    path dict
-    tuple val(sampleId), path(vcf), path(tbi), path(bam), path(bai)
-  
-  output:
+    input:
+    path genome from params.genome
+    path index from genome_index_ch
+    path dict from genome_dict_ch
+    tuple val(sampleId), path(vcf), path(bam), path(bai) from grouped_vcf_bam_bai_ch
+
+    output:
     path "ASE.tsv"
-  
-  script:
-  def bam_params = bam.collect{ "-I $it" }.join(' ')
-  """
-  gatk ASEReadCounter \
-          -R ${genome} \
-          -O ASE.tsv \
-          ${bam_params} \
-          -V ${vcf}
-  """
+
+    script:
+    """
+    echo "${bam.join('\n')}" > bam.list
+
+    java -jar $GATK -R ${genome} \
+                    -T ASEReadCounter \
+                    -o ASE.tsv \
+                    -I bam.list \
+                    -sites ${vcf}
+    """
 }
 
 /* 
