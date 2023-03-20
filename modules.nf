@@ -368,8 +368,7 @@ process '6C_ASE_knownSNPs' {
 
 def group_per_sample(bam_ch, vcf_ch) {
   bam_ch
-    .groupTuple()
-    .join(vcf_ch.groupTuple())
+    .join(vcf_ch)
     .map{ left, right -> 
       def sampleId = left[0]
       def bam = left[1]
